@@ -6,14 +6,14 @@ import type { ResearchReport } from "./types";
  * Skips silently if RESEND_API_KEY is not configured.
  */
 export async function sendReportEmail(
-  report: ResearchReport
+  report: ResearchReport,
+  to: string
 ): Promise<{ sent: boolean; to?: string; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.REPORT_EMAIL_TO;
   const from = process.env.REPORT_EMAIL_FROM || "onboarding@resend.dev";
 
-  if (!apiKey || !to) {
-    return { sent: false, error: "Email not configured (missing RESEND_API_KEY or REPORT_EMAIL_TO)" };
+  if (!apiKey) {
+    return { sent: false, error: "Email not configured (missing RESEND_API_KEY)" };
   }
 
   try {

@@ -144,53 +144,38 @@ async function* mergeGenerators<T>(generators: AsyncGenerator<T, unknown>[]): As
 /**
  * Orchestrates the full research pipeline, yielding events for streaming.
  * Runs one pipeline per selected provider, merging events when multiple are chosen.
+ * If an email address is provided, sends one email per completed report.
  */
 export async function* runResearchPipeline(
   topic: string,
-  providerIds: string[]
+  providerIds: string[],
+  email?: string
 ): AsyncGenerator<AgentEvent> {
+  const reports: { providerId: string; report: ResearchReport }[] = [];
+
   if (providerIds.length === 1) {
-    // Single provider — run directly, then handle notifier
-    const pipeline = runSinglePipeline(topic, providerIds[0]);
-    let report: ResearchReport | null = null;
-
-    for await (const event of pipeline) {
+    for await (const event of runSinglePipeline(topic, providerIds[0])) {
       yield event;
-      if (event.type === "report") report = event.report;
+      if (event.type === "report") reports.push({ providerId: providerIds[0], report: event.report });
     }
+  } else {
+    const pipelines = providerIds.map((id) => runSinglePipeline(topic, id));
+    for await (const event of mergeGenerators(pipelines)) {
+      yield event;
+      if (event.type === "report") reports.push({ providerId: event.providerId, report: event.report });
+    }
+  }
 
-    if (report) {
-      yield { type: "status", agent: "notifier", message: "Sending email notification...", providerId: providerIds[0] };
-      const emailResult = await sendReportEmail(report);
+  // Send one email per report if the user provided an email address
+  if (email && reports.length > 0) {
+    for (const { providerId, report } of reports) {
+      yield { type: "status", agent: "notifier", message: "Sending email notification...", providerId };
+      const emailResult = await sendReportEmail(report, email);
       if (emailResult.sent) {
-        yield { type: "email_sent", to: emailResult.to!, providerId: providerIds[0] };
+        yield { type: "email_sent", to: emailResult.to!, providerId };
       } else {
-        yield { type: "status", agent: "notifier", message: emailResult.error || "Email not sent", providerId: providerIds[0] };
+        yield { type: "status", agent: "notifier", message: emailResult.error || "Email not sent", providerId };
       }
-    }
-
-    yield { type: "all_done" };
-    return;
-  }
-
-  // Multiple providers — run in parallel, merge events
-  const pipelines = providerIds.map((id) => runSinglePipeline(topic, id));
-  const reports: ResearchReport[] = [];
-
-  for await (const event of mergeGenerators(pipelines)) {
-    yield event;
-    if (event.type === "report") reports.push(event.report);
-  }
-
-  // Send a single email with the first report (or skip if none)
-  if (reports.length > 0) {
-    const notifyProviderId = providerIds[0];
-    yield { type: "status", agent: "notifier", message: "Sending email notification...", providerId: notifyProviderId };
-    const emailResult = await sendReportEmail(reports[0]);
-    if (emailResult.sent) {
-      yield { type: "email_sent", to: emailResult.to!, providerId: notifyProviderId };
-    } else {
-      yield { type: "status", agent: "notifier", message: emailResult.error || "Email not sent", providerId: notifyProviderId };
     }
   }
 

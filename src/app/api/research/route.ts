@@ -5,7 +5,7 @@ import { getAvailableProviders } from "@/lib/agents/llm";
 export const maxDuration = 300; // 5 min timeout for long research tasks
 
 export async function POST(req: NextRequest) {
-  const { topic, providerIds } = await req.json();
+  const { topic, providerIds, email } = await req.json();
 
   if (!topic || typeof topic !== "string" || topic.trim().length === 0) {
     return new Response(JSON.stringify({ error: "Topic is required" }), {
@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of runResearchPipeline(topic.trim(), providerIds)) {
+        const validEmail = typeof email === "string" && email.includes("@") ? email.trim() : undefined;
+        for await (const event of runResearchPipeline(topic.trim(), providerIds, validEmail)) {
           const data = `data: ${JSON.stringify(event)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }

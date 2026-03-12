@@ -9,6 +9,7 @@ import { ProviderPipelineSection } from "@/components/ProviderPipelineSection";
 
 export default function Home() {
   const [topic, setTopic] = useState("");
+  const [email, setEmail] = useState("");
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [globalStage, setGlobalStage] = useState<"idle" | "running" | "done" | "error">("idle");
@@ -66,7 +67,7 @@ export default function Home() {
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: topic.trim(), providerIds: selectedProviders }),
+        body: JSON.stringify({ topic: topic.trim(), providerIds: selectedProviders, email: email.trim() || undefined }),
         signal: controller.signal,
       });
 
@@ -168,6 +169,8 @@ export default function Home() {
       <ResearchForm
         topic={topic}
         onTopicChange={setTopic}
+        email={email}
+        onEmailChange={setEmail}
         onSubmit={handleSubmit}
         onStop={handleStop}
         isRunning={isRunning}
