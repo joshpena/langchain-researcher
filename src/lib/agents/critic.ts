@@ -47,7 +47,8 @@ Evaluate whether these results are sufficient for a comprehensive report:`,
  */
 export async function critiqueResearch(
   topic: string,
-  results: ResearchResult[]
+  results: ResearchResult[],
+  providerId: string
 ): Promise<CriticFeedback> {
   const formattedResults = results
     .map(
@@ -56,7 +57,7 @@ export async function critiqueResearch(
     )
     .join("\n\n---\n\n");
 
-  const chain = RunnableSequence.from([prompt, createLLM(0.1), parser]);
+  const chain = RunnableSequence.from([prompt, createLLM(providerId, 0.1), parser]);
 
   return chain.invoke({
     topic,

@@ -36,10 +36,10 @@ Each sub-question should:
 /**
  * Planner Agent: breaks a broad topic into focused sub-questions.
  */
-export async function planResearch(topic: string): Promise<SubQuestion[]> {
+export async function planResearch(topic: string, providerId: string): Promise<SubQuestion[]> {
   const chain = RunnableSequence.from([
     prompt,
-    createLLM(0.2),
+    createLLM(providerId, 0.2),
     parser,
   ]);
 
