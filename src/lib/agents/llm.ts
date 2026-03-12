@@ -1,13 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-
-export interface LLMProviderConfig {
-  id: string;
-  label: string;
-  provider: "openai" | "anthropic";
-  modelName: string;
-}
+import type { LLMProviderConfig } from "./types";
 
 const PROVIDERS: LLMProviderConfig[] = [
   { id: "gpt-4o-mini", label: "GPT-4o Mini", provider: "openai", modelName: "gpt-4o-mini" },
@@ -25,6 +19,13 @@ const API_KEY_ENV: Record<string, string> = {
  */
 export function getAvailableProviders(): LLMProviderConfig[] {
   return PROVIDERS.filter((p) => !!process.env[API_KEY_ENV[p.provider]]);
+}
+
+/**
+ * Returns the human-readable label for a provider ID.
+ */
+export function getProviderLabel(providerId: string): string {
+  return PROVIDERS.find((p) => p.id === providerId)?.label ?? providerId;
 }
 
 /**

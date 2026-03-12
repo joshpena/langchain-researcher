@@ -3,6 +3,7 @@ import { researchQuestion } from "./researcher";
 import { critiqueResearch } from "./critic";
 import { writeReport } from "./writer";
 import { sendReportEmail } from "./notifier";
+import { getProviderLabel } from "./llm";
 import type { AgentEvent, ResearchResult, ResearchReport } from "./types";
 
 const MAX_CRITIC_LOOPS = 2;
@@ -170,7 +171,7 @@ export async function* runResearchPipeline(
   if (email && reports.length > 0) {
     for (const { providerId, report } of reports) {
       yield { type: "status", agent: "notifier", message: "Sending email notification...", providerId };
-      const emailResult = await sendReportEmail(report, email);
+      const emailResult = await sendReportEmail(report, email, getProviderLabel(providerId));
       if (emailResult.sent) {
         yield { type: "email_sent", to: emailResult.to!, providerId };
       } else {

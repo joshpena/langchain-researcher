@@ -9,7 +9,7 @@
 export interface LLMProviderConfig {
   id: string;
   label: string;
-  provider: string;
+  provider: "openai" | "anthropic";
   modelName: string;
 }
 
