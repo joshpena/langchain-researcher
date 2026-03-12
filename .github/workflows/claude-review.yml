@@ -1,4 +1,4 @@
-name: Claude PR Review
+name: Claude Code
 
 on:
   pull_request:
@@ -14,18 +14,15 @@ permissions:
   issues: write
 
 jobs:
-  claude-review:
-    # Auto-review new/updated PRs, or respond to @claude mentions in comments
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+  claude-pr-review:
+    # Auto-review new/updated PRs
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Automatically review all PRs; respond to @claude mentions otherwise
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             Review this pull request. Focus on:
             - Correctness and potential bugs
@@ -35,5 +32,15 @@ jobs:
             - TypeScript best practices (types, interfaces, error handling)
             - LangChain-specific patterns and practices
             Be concise. Use inline comments for specific line feedback.
+
+  claude-mention:
+    # Respond to @claude mentions in issue and PR comments
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          max_turns: 5
