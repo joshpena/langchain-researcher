@@ -70,7 +70,8 @@ Write the report:`,
  */
 export async function writeReport(
   topic: string,
-  results: ResearchResult[]
+  results: ResearchResult[],
+  providerId: string
 ): Promise<ResearchReport> {
   const findings = results
     .map(
@@ -78,7 +79,7 @@ export async function writeReport(
     )
     .join("\n\n---\n\n");
 
-  const chain = RunnableSequence.from([prompt, createLLM(0.3)]);
+  const chain = RunnableSequence.from([prompt, createLLM(providerId, 0.3)]);
 
   const response = await chain.invoke({ topic, findings });
   const markdown = response.content as string;

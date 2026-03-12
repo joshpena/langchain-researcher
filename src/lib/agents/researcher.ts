@@ -29,7 +29,8 @@ Write a well-sourced answer:`,
  * Multiple instances run in parallel for different sub-questions.
  */
 export async function researchQuestion(
-  question: string
+  question: string,
+  providerId: string
 ): Promise<ResearchResult> {
   // Step 1: Search the web using Tavily
   const searchTool = new TavilySearch({
@@ -55,7 +56,7 @@ export async function researchQuestion(
     )
     .join("\n---\n");
 
-  const chain = RunnableSequence.from([synthesizePrompt, createLLM(0.1)]);
+  const chain = RunnableSequence.from([synthesizePrompt, createLLM(providerId, 0.1)]);
 
   const response = await chain.invoke({
     question,
@@ -73,7 +74,8 @@ export async function researchQuestion(
  * Research multiple questions in parallel.
  */
 export async function researchAllQuestions(
-  questions: string[]
+  questions: string[],
+  providerId: string
 ): Promise<ResearchResult[]> {
-  return Promise.all(questions.map(researchQuestion));
+  return Promise.all(questions.map((q) => researchQuestion(q, providerId)));
 }

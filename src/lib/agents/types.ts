@@ -3,7 +3,15 @@
  *
  * Pipeline flow:
  *   User Input → Planner → Researcher (parallel) → Critic → Writer → Notifier
+ *   Runs once per selected LLM provider (in parallel when multiple are chosen).
  */
+
+export interface LLMProviderConfig {
+  id: string;
+  label: string;
+  provider: "openai" | "anthropic";
+  modelName: string;
+}
 
 export interface SubQuestion {
   id: number;
@@ -36,11 +44,12 @@ export interface ResearchReport {
 
 /** Events streamed to the frontend */
 export type AgentEvent =
-  | { type: "status"; agent: string; message: string }
-  | { type: "sub_questions"; questions: SubQuestion[] }
-  | { type: "research_result"; result: ResearchResult }
-  | { type: "critic_feedback"; feedback: CriticFeedback }
-  | { type: "report"; report: ResearchReport }
-  | { type: "email_sent"; to: string }
-  | { type: "error"; message: string }
-  | { type: "done" };
+  | { type: "status"; agent: string; message: string; providerId: string }
+  | { type: "sub_questions"; questions: SubQuestion[]; providerId: string }
+  | { type: "research_result"; result: ResearchResult; providerId: string }
+  | { type: "critic_feedback"; feedback: CriticFeedback; providerId: string }
+  | { type: "report"; report: ResearchReport; providerId: string }
+  | { type: "email_sent"; to: string; providerId: string }
+  | { type: "error"; message: string; providerId: string }
+  | { type: "done"; providerId: string }
+  | { type: "all_done" };
