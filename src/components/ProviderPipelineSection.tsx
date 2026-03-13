@@ -5,6 +5,7 @@ import { ResearchPlan } from "./ResearchPlan";
 import { ResearchFindings } from "./ResearchFindings";
 import { CriticFeedback } from "./CriticFeedback";
 import { ResearchReport } from "./ResearchReport";
+import { StreamingReport } from "./StreamingReport";
 import { ErrorBanner } from "./ErrorBanner";
 
 interface ProviderPipelineSectionProps {
@@ -18,7 +19,8 @@ export function ProviderPipelineSection({ state, providerLabel, isMultiProvider 
     state.statusMessages.length > 0 ||
     state.subQuestions.length > 0 ||
     state.results.length > 0 ||
-    state.report;
+    state.report ||
+    state.streamingMarkdown;
 
   if (!hasContent) return null;
 
@@ -43,6 +45,8 @@ export function ProviderPipelineSection({ state, providerLabel, isMultiProvider 
       {!state.report && <ResearchFindings results={state.results} />}
 
       {state.criticFeedback && <CriticFeedback feedback={state.criticFeedback} />}
+
+      {!state.report && state.streamingMarkdown && <StreamingReport markdown={state.streamingMarkdown} />}
 
       {state.report && <ResearchReport report={state.report} collapsed={isMultiProvider} />}
 
