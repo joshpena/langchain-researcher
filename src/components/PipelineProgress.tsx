@@ -8,7 +8,7 @@ const STAGES: PipelineStage[] = ["planner", "researcher", "critic", "writer", "n
 
 export function PipelineProgress({ stage }: PipelineProgressProps) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 flex-wrap">
       {STAGES.map((s, i) => {
         const isActive = s === stage;
         const isPast = stage === "done" || STAGES.indexOf(stage) > i;
@@ -18,11 +18,11 @@ export function PipelineProgress({ stage }: PipelineProgressProps) {
           <div key={s} className="flex items-center gap-1">
             {i > 0 && (
               <div
-                className={`w-8 h-0.5 ${isPast ? "bg-green-500" : "bg-gray-700"}`}
+                className={`w-4 sm:w-8 h-0.5 shrink-0 ${isPast ? "bg-green-500" : "bg-gray-700"}`}
               />
             )}
             <div
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 isActive
                   ? isFailed
                     ? "bg-red-600 text-white"

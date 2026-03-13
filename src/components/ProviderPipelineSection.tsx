@@ -25,7 +25,7 @@ export function ProviderPipelineSection({ state, providerLabel, isMultiProvider 
   if (!hasContent) return null;
 
   return (
-    <div className={isMultiProvider ? "mb-8 border border-gray-800 rounded-lg p-4" : ""}>
+    <div className={isMultiProvider ? "border border-gray-800 rounded-lg p-4 min-w-0" : ""}>
       {isMultiProvider && (
         <div className="mb-4">
           <h2 className="text-lg font-semibold mb-2">{providerLabel}</h2>

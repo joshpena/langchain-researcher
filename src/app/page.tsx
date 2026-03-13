@@ -158,7 +158,7 @@ export default function Home() {
   const isMultiProvider = selectedProviders.length > 1;
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
+    <main className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2">Research Assistant</h1>
       <p className="text-gray-400 mb-8">
         Enter a topic and the multi-agent pipeline will research, review, and write a report.
@@ -182,14 +182,16 @@ export default function Home() {
         canSubmit={!!topic.trim() && selectedProviders.length > 0}
       />
 
-      {Object.keys(providerStates).map((pid) => (
-        <ProviderPipelineSection
-          key={pid}
-          state={providerStates[pid]}
-          providerLabel={providerLabel(pid)}
-          isMultiProvider={isMultiProvider}
-        />
-      ))}
+      <div className={isMultiProvider ? "grid grid-cols-2 gap-6" : ""}>
+        {Object.keys(providerStates).map((pid) => (
+          <ProviderPipelineSection
+            key={pid}
+            state={providerStates[pid]}
+            providerLabel={providerLabel(pid)}
+            isMultiProvider={isMultiProvider}
+          />
+        ))}
+      </div>
     </main>
   );
 }
