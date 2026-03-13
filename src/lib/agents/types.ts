@@ -42,6 +42,24 @@ export interface ResearchReport {
   sources: Source[];
 }
 
+export interface AgentStageMetrics {
+  agent: string;
+  promptTokens: number;
+  completionTokens: number;
+  llmCalls: number;
+  llmLatencyMs: number;
+  stageDurationMs: number;
+  costUsd: number;
+}
+
+export interface PipelineMetrics {
+  stages: AgentStageMetrics[];
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
+  totalCostUsd: number;
+  totalDurationMs: number;
+}
+
 /** Events streamed to the frontend */
 export type AgentEvent =
   | { type: "status"; agent: string; message: string; providerId: string }
@@ -51,6 +69,8 @@ export type AgentEvent =
   | { type: "report_chunk"; chunk: string; providerId: string }
   | { type: "report"; report: ResearchReport; providerId: string }
   | { type: "email_sent"; to: string; providerId: string }
+  | { type: "stage_metrics"; metrics: AgentStageMetrics; providerId: string }
+  | { type: "pipeline_metrics"; metrics: PipelineMetrics; providerId: string }
   | { type: "error"; message: string; providerId: string }
   | { type: "done"; providerId: string }
   | { type: "all_done" };

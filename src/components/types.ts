@@ -1,4 +1,4 @@
-import type { SubQuestion, ResearchResult, CriticFeedback, ResearchReport } from "@/lib/agents/types";
+import type { SubQuestion, ResearchResult, CriticFeedback, ResearchReport, AgentStageMetrics, PipelineMetrics } from "@/lib/agents/types";
 
 export type PipelineStage = "idle" | "planner" | "researcher" | "critic" | "writer" | "notifier" | "done" | "error";
 
@@ -21,6 +21,8 @@ export interface ProviderState {
   criticFeedback: CriticFeedback | null;
   report: ResearchReport | null;
   streamingMarkdown: string | null;
+  stageMetrics: AgentStageMetrics[];
+  pipelineMetrics: PipelineMetrics | null;
   error: string | null;
 }
 
@@ -33,6 +35,8 @@ export function emptyProviderState(): ProviderState {
     criticFeedback: null,
     report: null,
     streamingMarkdown: null,
+    stageMetrics: [],
+    pipelineMetrics: null,
     error: null,
   };
 }
