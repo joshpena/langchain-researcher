@@ -124,6 +124,14 @@ export default function Home() {
             case "report":
               updateProviderState(pid, () => ({ report: event.report, streamingMarkdown: null }));
               break;
+            case "stage_metrics":
+              updateProviderState(pid, (s) => ({
+                stageMetrics: [...s.stageMetrics.filter((m) => m.agent !== event.metrics.agent), event.metrics],
+              }));
+              break;
+            case "pipeline_metrics":
+              updateProviderState(pid, () => ({ pipelineMetrics: event.metrics }));
+              break;
             case "email_sent":
               updateProviderState(pid, (s) => ({
                 statusMessages: [...s.statusMessages, `Email sent to ${event.to}`],

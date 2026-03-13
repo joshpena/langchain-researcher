@@ -3,7 +3,8 @@ import { researchQuestion } from "./researcher";
 import { critiqueResearch } from "./critic";
 import { streamWriteReport } from "./writer";
 import { sendReportEmail } from "./notifier";
-import { getProviderLabel } from "./llm";
+import { getProviderLabel, getModelName, registerCallbacks, clearCallbacks } from "./llm";
+import { MetricsCollector, UsageCallbackHandler } from "./metrics";
 import type { AgentEvent, ResearchResult, ResearchReport } from "./types";
 
 const MAX_CRITIC_LOOPS = 2;
@@ -15,11 +16,18 @@ async function* runSinglePipeline(
   topic: string,
   providerId: string
 ): AsyncGenerator<AgentEvent> {
+  const collector = new MetricsCollector();
+  const handler = new UsageCallbackHandler(collector, getModelName(providerId));
+  registerCallbacks(providerId, [handler]);
+
   try {
     // --- Step 1: Planner ---
+    collector.markStageStart("planner");
     yield { type: "status", agent: "planner", message: "Breaking down the topic into sub-questions...", providerId };
 
     const subQuestions = await planResearch(topic, providerId);
+    collector.markStageEnd("planner");
+    yield { type: "stage_metrics", metrics: collector.getStageMetrics("planner")!, providerId };
     yield { type: "sub_questions", questions: subQuestions, providerId };
     yield {
       type: "status",
@@ -34,6 +42,7 @@ async function* runSinglePipeline(
     let criticLoop = 0;
 
     while (criticLoop <= MAX_CRITIC_LOOPS) {
+      collector.markStageStart("researcher");
       yield {
         type: "status",
         agent: "researcher",
@@ -48,6 +57,8 @@ async function* runSinglePipeline(
           return result;
         })
       );
+      collector.markStageEnd("researcher");
+      yield { type: "stage_metrics", metrics: collector.getStageMetrics("researcher")!, providerId };
 
       // Stream each result as it completes
       for (const result of newResults) {
@@ -56,6 +67,7 @@ async function* runSinglePipeline(
       }
 
       // --- Step 3: Critic ---
+      collector.markStageStart("critic");
       yield {
         type: "status",
         agent: "critic",
@@ -64,6 +76,8 @@ async function* runSinglePipeline(
       };
 
       const feedback = await critiqueResearch(topic, allResults, providerId);
+      collector.markStageEnd("critic");
+      yield { type: "stage_metrics", metrics: collector.getStageMetrics("critic")!, providerId };
       yield { type: "critic_feedback", feedback, providerId };
 
       if (feedback.passed || criticLoop >= MAX_CRITIC_LOOPS) {
@@ -97,6 +111,7 @@ async function* runSinglePipeline(
     }
 
     // --- Step 4: Writer ---
+    collector.markStageStart("writer");
     yield {
       type: "status",
       agent: "writer",
@@ -112,9 +127,14 @@ async function* runSinglePipeline(
         report = event.complete;
       }
     }
+    collector.markStageEnd("writer");
+    yield { type: "stage_metrics", metrics: collector.getStageMetrics("writer")!, providerId };
+
     if (report) {
       yield { type: "report" as const, report, providerId };
     }
+
+    yield { type: "pipeline_metrics", metrics: collector.getSnapshot(), providerId };
     yield { type: "done", providerId };
 
     return report;
@@ -125,6 +145,8 @@ async function* runSinglePipeline(
       providerId,
     };
     return null;
+  } finally {
+    clearCallbacks(providerId);
   }
 }
 

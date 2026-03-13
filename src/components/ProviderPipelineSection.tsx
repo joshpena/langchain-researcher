@@ -7,6 +7,7 @@ import { CriticFeedback } from "./CriticFeedback";
 import { ResearchReport } from "./ResearchReport";
 import { StreamingReport } from "./StreamingReport";
 import { ErrorBanner } from "./ErrorBanner";
+import { ObservabilityPanel } from "./ObservabilityPanel";
 
 interface ProviderPipelineSectionProps {
   state: ProviderState;
@@ -20,7 +21,8 @@ export function ProviderPipelineSection({ state, providerLabel, isMultiProvider 
     state.subQuestions.length > 0 ||
     state.results.length > 0 ||
     state.report ||
-    state.streamingMarkdown;
+    state.streamingMarkdown ||
+    state.stageMetrics.length > 0;
 
   if (!hasContent) return null;
 
@@ -38,6 +40,8 @@ export function ProviderPipelineSection({ state, providerLabel, isMultiProvider 
           <PipelineProgress stage={state.stage} />
         </div>
       )}
+
+      <ObservabilityPanel stageMetrics={state.stageMetrics} pipelineMetrics={state.pipelineMetrics} />
 
       <StatusLog messages={state.statusMessages} />
       <ResearchPlan questions={state.subQuestions} />
