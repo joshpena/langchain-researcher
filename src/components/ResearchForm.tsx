@@ -33,7 +33,11 @@ export function ResearchForm({ topic, onTopicChange, email, onEmailChange, onSub
         {isRunning ? (
           <button
             type="button"
-            onClick={onStop}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onStop();
+            }}
             className="px-6 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors"
           >
             Stop
