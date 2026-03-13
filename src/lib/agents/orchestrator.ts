@@ -1,7 +1,7 @@
 import { planResearch } from "./planner";
 import { researchQuestion } from "./researcher";
 import { critiqueResearch } from "./critic";
-import { writeReport } from "./writer";
+import { streamWriteReport } from "./writer";
 import { sendReportEmail } from "./notifier";
 import { getProviderLabel } from "./llm";
 import type { AgentEvent, ResearchResult, ResearchReport } from "./types";
@@ -104,8 +104,17 @@ async function* runSinglePipeline(
       providerId,
     };
 
-    const report = await writeReport(topic, allResults, providerId);
-    yield { type: "report", report, providerId };
+    let report: ResearchReport | null = null;
+    for await (const event of streamWriteReport(topic, allResults, providerId)) {
+      if ("chunk" in event) {
+        yield { type: "report_chunk" as const, chunk: event.chunk, providerId };
+      } else {
+        report = event.complete;
+      }
+    }
+    if (report) {
+      yield { type: "report" as const, report, providerId };
+    }
     yield { type: "done", providerId };
 
     return report;

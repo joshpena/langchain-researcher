@@ -116,8 +116,13 @@ export default function Home() {
             case "critic_feedback":
               updateProviderState(pid, () => ({ criticFeedback: event.feedback }));
               break;
+            case "report_chunk":
+              updateProviderState(pid, (s) => ({
+                streamingMarkdown: (s.streamingMarkdown ?? "") + event.chunk,
+              }));
+              break;
             case "report":
-              updateProviderState(pid, () => ({ report: event.report }));
+              updateProviderState(pid, () => ({ report: event.report, streamingMarkdown: null }));
               break;
             case "email_sent":
               updateProviderState(pid, (s) => ({

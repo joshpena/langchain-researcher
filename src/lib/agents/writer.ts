@@ -3,6 +3,8 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { createLLM } from "./llm";
 import type { ResearchReport, ResearchResult, Source } from "./types";
 
+type StreamWriteEvent = { chunk: string } | { complete: ResearchReport };
+
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
@@ -66,29 +68,9 @@ Write the report:`,
 ]);
 
 /**
- * Writer Agent: synthesizes all research into a structured markdown report.
+ * Collects unique sources from research results and builds the sources markdown section.
  */
-export async function writeReport(
-  topic: string,
-  results: ResearchResult[],
-  providerId: string
-): Promise<ResearchReport> {
-  const findings = results
-    .map(
-      (r) => `### ${r.question}\n\n${r.answer}`
-    )
-    .join("\n\n---\n\n");
-
-  const chain = RunnableSequence.from([prompt, createLLM(providerId, 0.3)]);
-
-  const response = await chain.invoke({ topic, findings });
-  const markdown = response.content as string;
-
-  // Extract title from the first heading
-  const titleMatch = markdown.match(/^#\s+(.+)$/m);
-  const title = titleMatch ? titleMatch[1] : topic;
-
-  // Collect all unique sources
+function buildSourcesData(results: ResearchResult[]) {
   const allSources: Source[] = [];
   const seen = new Set<string>();
   for (const r of results) {
@@ -99,15 +81,47 @@ export async function writeReport(
       }
     }
   }
-
-  // Append sources section
   const sourcesSection =
     "\n\n---\n\n## Sources\n\n" +
     allSources.map((s, i) => `${i + 1}. [${s.title}](${s.url})`).join("\n");
+  return { allSources, sourcesSection };
+}
 
-  return {
-    title,
-    markdown: markdown + sourcesSection,
-    sources: allSources,
+/**
+ * Streaming Writer Agent: yields report tokens as they arrive from the LLM,
+ * then yields the complete ResearchReport with sources appended.
+ */
+export async function* streamWriteReport(
+  topic: string,
+  results: ResearchResult[],
+  providerId: string
+): AsyncGenerator<StreamWriteEvent> {
+  const findings = results
+    .map((r) => `### ${r.question}\n\n${r.answer}`)
+    .join("\n\n---\n\n");
+
+  const chain = RunnableSequence.from([prompt, createLLM(providerId, 0.3)]);
+
+  let fullMarkdown = "";
+
+  for await (const chunk of await chain.stream({ topic, findings })) {
+    const text = typeof chunk.content === "string" ? chunk.content : "";
+    if (text) {
+      fullMarkdown += text;
+      yield { chunk: text };
+    }
+  }
+
+  const titleMatch = fullMarkdown.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : topic;
+
+  const { allSources, sourcesSection } = buildSourcesData(results);
+
+  yield {
+    complete: {
+      title,
+      markdown: fullMarkdown + sourcesSection,
+      sources: allSources,
+    },
   };
 }

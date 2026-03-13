@@ -20,6 +20,7 @@ export interface ProviderState {
   results: ResearchResult[];
   criticFeedback: CriticFeedback | null;
   report: ResearchReport | null;
+  streamingMarkdown: string | null;
   error: string | null;
 }
 
@@ -31,6 +32,7 @@ export function emptyProviderState(): ProviderState {
     results: [],
     criticFeedback: null,
     report: null,
+    streamingMarkdown: null,
     error: null,
   };
 }

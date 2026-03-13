@@ -48,6 +48,7 @@ export type AgentEvent =
   | { type: "sub_questions"; questions: SubQuestion[]; providerId: string }
   | { type: "research_result"; result: ResearchResult; providerId: string }
   | { type: "critic_feedback"; feedback: CriticFeedback; providerId: string }
+  | { type: "report_chunk"; chunk: string; providerId: string }
   | { type: "report"; report: ResearchReport; providerId: string }
   | { type: "email_sent"; to: string; providerId: string }
   | { type: "error"; message: string; providerId: string }
