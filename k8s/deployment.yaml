@@ -25,7 +25,7 @@ spec:
         - name: langchain-researcher
           # This will be replaced with your actual Artifact Registry image URL
           # Format: REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE:TAG
-          image: us-central1-docker.pkg.dev/langchain-researcher/langchain-repo/langchain-researcher:latest
+          image: us-central1-docker.pkg.dev/langchain-researcher/langchain-repo/langchain-researcher:v1
 
           ports:
             - containerPort: 3000
