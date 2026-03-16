@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langchain-researcher
+  labels:
+    app: langchain-researcher
+spec:
+  # Run 2 copies for redundancy — if one pod crashes, the other serves traffic
+  replicas: 2
+
+  # selector tells the Deployment which pods it owns/manages.
+  # It matches pods by the label "app: langchain-researcher".
+  selector:
+    matchLabels:
+      app: langchain-researcher
+
+  template:
+    # These labels are applied to each pod created by this Deployment.
+    # They must match the selector above.
+    metadata:
+      labels:
+        app: langchain-researcher
+    spec:
+      containers:
+        - name: langchain-researcher
+          # This will be replaced with your actual Artifact Registry image URL
+          # Format: REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE:TAG
+          image: us-central1-docker.pkg.dev/langchain-researcher/langchain-repo/langchain-researcher:latest
+
+          ports:
+            - containerPort: 3000
+
+          # Inject all keys from our Secret as environment variables
+          envFrom:
+            - secretRef:
+                name: langchain-secrets
+
+          # Resource requests (guaranteed) and limits (maximum).
+          # Autopilot bills based on requests, so right-size these.
+          # 250m CPU = 0.25 cores, 512Mi = 512 megabytes of RAM.
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          # Readiness probe: "Is this pod ready to receive traffic?"
+          # Kubernetes won't send traffic until this passes.
+          # httpGet hits your app's root page on port 3000.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          # Liveness probe: "Is this pod still alive and working?"
+          # If this fails 3 times in a row, Kubernetes kills and restarts the pod.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
