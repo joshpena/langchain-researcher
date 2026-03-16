@@ -24,6 +24,10 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+
+# kubernetes secrets (contains API keys)
+k8s/secret.yaml
 
 # vercel
 .vercel
